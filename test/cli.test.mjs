@@ -1,9 +1,12 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync, existsSync, readdirSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { parseArgs, AGENTS, detectAgents } from "../bin/cli.mjs";
+import { fileURLToPath } from "node:url";
+import { parseArgs, AGENTS, detectAgents, resolveTargets, installSkill } from "../bin/cli.mjs";
+
+const PKG_ROOT = fileURLToPath(new URL("..", import.meta.url));
 
 function tmpProj(...dirs) {
   const root = mkdtempSync(join(tmpdir(), "cad-test-"));
@@ -78,5 +81,43 @@ test("只看目录本身，不误认同名文件", () => {
   const root = mkdtempSync(join(tmpdir(), "cad-test-"));
   writeFileSync(join(root, ".claude"), "");
   assert.deepEqual(detectAgents(root), []);
+  rmSync(root, { recursive: true, force: true });
+});
+
+test("resolveTargets 项目级", () => {
+  const t = resolveTargets(["claude"], { global: false, baseDir: "/proj" });
+  assert.deepEqual(t, [{ name: "claude", dir: "/proj/.claude/skills/create-agent-docs" }]);
+});
+
+test("resolveTargets 全局级展开 ~", () => {
+  const t = resolveTargets(["pi"], { global: true, baseDir: "/proj", home: "/home/tester" });
+  assert.deepEqual(t, [{ name: "pi", dir: "/home/tester/.pi/agent/skills/create-agent-docs" }]);
+});
+
+test("installSkill 首次安装 → installed，文件齐全", () => {
+  const root = tmpProj();
+  const result = installSkill(PKG_ROOT, join(root, "skills", "create-agent-docs"), false);
+  assert.equal(result, "installed");
+  assert.ok(existsSync(join(root, "skills", "create-agent-docs", "SKILL.md")));
+  const refs = readdirSync(join(root, "skills", "create-agent-docs", "references"));
+  assert.deepEqual(refs.sort(), [
+    "agents-md-template.md", "bug-fix-guide.md", "feature-check-guide.md", "git-commit-guide.md",
+  ]);
+  rmSync(root, { recursive: true, force: true });
+});
+
+test("installSkill 二次安装 → skipped，不改动", () => {
+  const root = tmpProj();
+  const dir = join(root, "skills", "create-agent-docs");
+  installSkill(PKG_ROOT, dir, false);
+  assert.equal(installSkill(PKG_ROOT, dir, false), "skipped");
+  rmSync(root, { recursive: true, force: true });
+});
+
+test("installSkill --force → 覆盖后仍 installed", () => {
+  const root = tmpProj();
+  const dir = join(root, "skills", "create-agent-docs");
+  installSkill(PKG_ROOT, dir, false);
+  assert.equal(installSkill(PKG_ROOT, dir, true), "installed");
   rmSync(root, { recursive: true, force: true });
 });

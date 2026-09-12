@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-import { statSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, statSync } from "node:fs";
+import { homedir } from "node:os";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 
@@ -50,4 +51,22 @@ export function detectAgents(cwd) {
     } catch { /* 不存在 */ }
   }
   return Object.keys(AGENTS).filter((n) => found.has(n));
+}
+
+const SKILL_NAME = "create-agent-docs";
+
+export function resolveTargets(names, { global, baseDir = process.cwd(), home = homedir() }) {
+  return names.map((name) => {
+    const raw = global ? AGENTS[name].global : join(baseDir, AGENTS[name].project);
+    const dir = raw.startsWith("~") ? join(home, raw.slice(1)) : raw;
+    return { name, dir: join(dir, SKILL_NAME) };
+  });
+}
+
+export function installSkill(pkgRoot, targetDir, force) {
+  if (existsSync(targetDir) && !force) return "skipped";
+  mkdirSync(targetDir, { recursive: true });
+  cpSync(join(pkgRoot, "SKILL.md"), join(targetDir, "SKILL.md"));
+  cpSync(join(pkgRoot, "references"), join(targetDir, "references"), { recursive: true });
+  return "installed";
 }
