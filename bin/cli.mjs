@@ -1,8 +1,8 @@
 #!/usr/bin/env node
-import { cpSync, existsSync, mkdirSync, statSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, realpathSync, statSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
-import { pathToFileURL } from "node:url";
+import { pathToFileURL, fileURLToPath } from "node:url";
 
 export const AGENTS = {
   claude:   { project: ".claude/skills",    global: "~/.claude/skills" },
@@ -69,4 +69,58 @@ export function installSkill(pkgRoot, targetDir, force) {
   cpSync(join(pkgRoot, "SKILL.md"), join(targetDir, "SKILL.md"));
   cpSync(join(pkgRoot, "references"), join(targetDir, "references"), { recursive: true });
   return "installed";
+}
+
+const HELP_TEXT = `create-agent-docs-skill — 安装 create-agent-docs skill
+
+用法:
+  npx create-agent-docs-skill                自动检测项目已配置的 agent
+  npx create-agent-docs-skill --agent a,b    指定 agent（claude,codex,opencode,pi）
+  npx create-agent-docs-skill --all          安装全部 agent
+选项:
+  --global   安装到用户级目录而非项目目录
+  --force    覆盖已存在的安装
+  --help     显示本帮助
+`;
+
+export function main(argv, { cwd = process.cwd(), home = homedir(), stdout = (s) => process.stdout.write(s) } = {}) {
+  const pkgRoot = fileURLToPath(new URL("..", import.meta.url));
+  const args = parseArgs(argv);
+
+  if (args.error) {
+    stdout(`✖ ${args.error}\n运行 --help 查看用法。\n`);
+    return 1;
+  }
+  if (args.help) {
+    stdout(HELP_TEXT);
+    return 0;
+  }
+
+  const names = args.all ? Object.keys(AGENTS)
+    : args.agents ?? (args.global ? null : detectAgents(cwd));
+  if (!names || names.length === 0) {
+    stdout("✖ 未检测到已配置的 coding agent 目录（.claude/.codex/.agents/.opencode/.pi）。\n" +
+      "  用 --agent claude,codex,opencode,pi 指定，或 --all 安装全部。\n");
+    return 1;
+  }
+
+  const lines = ["✔ create-agent-docs 已安装到:"];
+  let failed = 0;
+  for (const t of resolveTargets(names, { global: args.global, baseDir: cwd, home })) {
+    try {
+      const r = installSkill(pkgRoot, t.dir, args.force);
+      lines.push(`  • ${t.dir}   (${t.name}${r === "skipped" ? ", 已存在，跳过；用 --force 覆盖" : ""})`);
+    } catch (err) {
+      failed++;
+      lines.push(`  ✖ ${t.dir}   (${t.name}) 安装失败: ${err.message}`);
+    }
+  }
+  stdout(lines.join("\n") + "\n在目标项目启动 agent 后，使用 /create-agent-docs 触发。\n");
+  return failed > 0 ? 1 : 0;
+}
+
+// 入口守卫：npx/npm 会通过 .bin 下的符号链接调用本文件，此时 process.argv[1] 是
+// 链接路径而 import.meta.url 是真实路径，需先 realpath 再比较，否则守卫永不触发。
+if (process.argv[1] && import.meta.url === pathToFileURL(realpathSync(process.argv[1])).href) {
+  process.exit(main(process.argv.slice(2)));
 }

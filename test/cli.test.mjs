@@ -4,7 +4,7 @@ import { mkdtempSync, mkdirSync, writeFileSync, rmSync, existsSync, readdirSync 
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { parseArgs, AGENTS, detectAgents, resolveTargets, installSkill } from "../bin/cli.mjs";
+import { parseArgs, AGENTS, detectAgents, resolveTargets, installSkill, main } from "../bin/cli.mjs";
 
 const PKG_ROOT = fileURLToPath(new URL("..", import.meta.url));
 
@@ -119,5 +119,57 @@ test("installSkill --force → 覆盖后仍 installed", () => {
   const dir = join(root, "skills", "create-agent-docs");
   installSkill(PKG_ROOT, dir, false);
   assert.equal(installSkill(PKG_ROOT, dir, true), "installed");
+  rmSync(root, { recursive: true, force: true });
+});
+
+function run(argv, projDirs) {
+  const root = tmpProj(...projDirs);
+  const lines = [];
+  const code = main(argv, { cwd: root, home: join(root, "fakehome"), stdout: (s) => lines.push(s) });
+  return { code, lines, root };
+}
+
+test("main 自动检测安装 claude", () => {
+  const { code, lines, root } = run(["--agent", "claude"], []);
+  assert.equal(code, 0);
+  assert.ok(lines.join("\n").includes(".claude/skills/create-agent-docs"));
+  assert.ok(existsSync(join(root, ".claude/skills/create-agent-docs/SKILL.md")));
+  rmSync(root, { recursive: true, force: true });
+});
+
+test("main 检测不到任何 agent 且未指定 → 退出码 1 并提示", () => {
+  const { code, lines, root } = run([], []);
+  assert.equal(code, 1);
+  assert.ok(lines.join("\n").includes("--agent"));
+  rmSync(root, { recursive: true, force: true });
+});
+
+test("main 自动检测多个 agent 全装", () => {
+  const { code, root } = run([], [".claude", ".pi"]);
+  assert.equal(code, 0);
+  assert.ok(existsSync(join(root, ".claude/skills/create-agent-docs/SKILL.md")));
+  assert.ok(existsSync(join(root, ".pi/skills/create-agent-docs/SKILL.md")));
+  rmSync(root, { recursive: true, force: true });
+});
+
+test("main 幂等：二次运行跳过但退出码 0", () => {
+  const first = run(["--agent", "claude"], []);
+  const second = main(["--agent", "claude"], { cwd: first.root, home: join(first.root, "fakehome"), stdout: () => {} });
+  assert.equal(second, 0);
+  rmSync(first.root, { recursive: true, force: true });
+});
+
+test("main --all 装四家", () => {
+  const { code, root } = run(["--all"], []);
+  assert.equal(code, 0);
+  for (const d of [".claude/skills", ".agents/skills", ".opencode/skills", ".pi/skills"]) {
+    assert.ok(existsSync(join(root, d, "create-agent-docs/SKILL.md")), d);
+  }
+  rmSync(root, { recursive: true, force: true });
+});
+
+test("main --help 退出码 0", () => {
+  const { code, root } = run(["--help"], []);
+  assert.equal(code, 0);
   rmSync(root, { recursive: true, force: true });
 });
