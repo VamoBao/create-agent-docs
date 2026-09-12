@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+import { statSync } from "node:fs";
+import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 
 export const AGENTS = {
@@ -29,4 +31,23 @@ export function parseArgs(argv) {
     else { return { ...r, error: `未知的参数: ${a}` }; }
   }
   return r;
+}
+
+// 目录存在信号 → agent 名。.codex 和 .agents 都映射到 codex。
+const DETECT_RULES = [
+  [".claude", "claude"],
+  [".codex", "codex"],
+  [".agents", "codex"],
+  [".opencode", "opencode"],
+  [".pi", "pi"],
+];
+
+export function detectAgents(cwd) {
+  const found = new Set();
+  for (const [dir, agent] of DETECT_RULES) {
+    try {
+      if (statSync(join(cwd, dir)).isDirectory()) found.add(agent);
+    } catch { /* 不存在 */ }
+  }
+  return Object.keys(AGENTS).filter((n) => found.has(n));
 }
