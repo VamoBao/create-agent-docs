@@ -11,7 +11,8 @@
     "bin/",
     "SKILL.md",
     "references/",
-    "README.md"
+    "README.md",
+    "LICENSE"
   ],
   "engines": {
     "node": ">=18"

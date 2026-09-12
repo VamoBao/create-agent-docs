@@ -96,8 +96,16 @@ export function main(argv, { cwd = process.cwd(), home = homedir(), stdout = (s)
     return 0;
   }
 
-  const names = args.all ? Object.keys(AGENTS)
-    : args.agents ?? (args.global ? null : detectAgents(cwd));
+  // --agent 空白值解析出 [] 时视同未指定，回落到自动检测。
+  const explicit = args.agents && args.agents.length > 0 ? args.agents : null;
+  if (args.global && !args.all && !explicit) {
+    stdout("✖ --global 需要配合 --agent 或 --all 指定要安装的 agent。\n" +
+      "  例: npx create-agent-docs-skill --agent claude --global\n" +
+      "      npx create-agent-docs-skill --all --global\n");
+    return 1;
+  }
+
+  const names = args.all ? Object.keys(AGENTS) : explicit ?? detectAgents(cwd);
   if (!names || names.length === 0) {
     stdout("✖ 未检测到已配置的 coding agent 目录（.claude/.codex/.agents/.opencode/.pi）。\n" +
       "  用 --agent claude,codex,opencode,pi 指定，或 --all 安装全部。\n");

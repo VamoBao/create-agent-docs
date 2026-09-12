@@ -168,6 +168,22 @@ test("main --all 装四家", () => {
   rmSync(root, { recursive: true, force: true });
 });
 
+test("main --global 单独使用 → 退出码 1 且提示需配合 --agent/--all", () => {
+  const { code, lines, root } = run(["--global"], []);
+  assert.equal(code, 1);
+  const out = lines.join("\n");
+  assert.ok(out.includes("--global"), "提示应提到 --global 本身");
+  assert.ok(out.includes("--agent"), "提示应指向 --agent/--all");
+  rmSync(root, { recursive: true, force: true });
+});
+
+test("main --agent 空白值（agents 为 []）与 null 同等对待，走自动检测", () => {
+  const { code, root } = run(["--agent", " "], [".claude"]);
+  assert.equal(code, 0);
+  assert.ok(existsSync(join(root, ".claude/skills/create-agent-docs/SKILL.md")));
+  rmSync(root, { recursive: true, force: true });
+});
+
 test("main --help 退出码 0", () => {
   const { code, root } = run(["--help"], []);
   assert.equal(code, 0);

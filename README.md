@@ -59,7 +59,7 @@ npx create-agent-docs-skill --agent claude,codex
 # 或安装全部四家
 npx create-agent-docs-skill --all
 
-# 安装到用户级目录（所有项目可用；--global 需搭配 --agent 或 --all）
+# 安装到用户级目录（所有项目可用；--global 需配合 --agent 或 --all，单独使用会提示并退出）
 npx create-agent-docs-skill --all --global
 
 # 覆盖已存在的安装
@@ -75,7 +75,7 @@ npx create-agent-docs-skill --agent claude --force
 | OpenCode | `.opencode/skills/` | `~/.config/opencode/skills/` |
 | pi | `.pi/skills/` | `~/.pi/agent/skills/` |
 
-注：`.agents/skills/` 是 Codex、OpenCode、pi 共享的通用约定，一份拷贝三家可读。
+注：`.agents/skills/` 是 Codex、OpenCode、pi 共享的通用约定，一份拷贝三家可读（`--all` 时各 agent 仍会装到各自的专属目录）。
 
 ### 手动安装（备选）
 
