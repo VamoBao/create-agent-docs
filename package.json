@@ -1,6 +1,6 @@
 {
   "name": "create-agent-docs-skill",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Install the create-agent-docs skill for Claude Code, Codex, OpenCode, and pi coding agents",
   "type": "module",
   "license": "MIT",
