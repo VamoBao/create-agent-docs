@@ -21,7 +21,7 @@
 ├── AGENTS.md          # 入口文档：项目背景、技术栈、目录结构、工作流指引
 ├── CLAUDE.md          # 仅一行 @AGENTS.md 导入（若已存在则不覆盖）
 └── docs/
-    ├── feature-check-guide.md   # 需求工作流：校验 → 任务包确认单 → 实现 → 落盘 → 原子提交
+    ├── feature-check-guide.md   # 需求工作流：分级 → 校验 → 复杂需求拆解 → 任务清单落盘 → WIP 执行 → 归一收尾
     ├── git-commit-guide.md      # Git 提交规范：Conventional Commits + 原子性/一致性约束
     └── bug-fix-guide.md         # 缺陷修复工作流：错误归因 → 修复策略 → 流程升级提醒
 ```
@@ -31,7 +31,7 @@
 | 文档 | 内容 | 位置 |
 |---|---|---|
 | `ARCHITECTURE.md` | 模块架构蓝图、文件职责与依赖边界 | 目标模块目录内 |
-| `PROGRESS.md` | 进度与已知 Bug | 目标模块目录内 |
+| `PROGRESS.md` | 进度（进行中任务清单、已完成总结、历史归档）与已知 Bug | 目标模块目录内 |
 | `DECISIONS.md` | 重大决策记录（背景、备选方案、结论） | 目标模块目录内 |
 
 ## 执行流程

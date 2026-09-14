@@ -39,7 +39,7 @@ description: 仅当用户需要为项目建立 Agent 文档工作流时，或用
   - **已有** `AGENTS.md`（无论 `CLAUDE.md` 是否存在）：不得覆盖原有内容，在 `AGENTS.md` 末尾追加工作流引入章节；若 `CLAUDE.md` 存在但未导入 `AGENTS.md`，补一行 `@AGENTS.md`
   - **仅有** `CLAUDE.md`：创建 `AGENTS.md`，并在 `CLAUDE.md` 末尾追加一行 `@AGENTS.md` 导入
 - 在 `docs/` 下创建三份指导文档（模板见 references/，**必须先做技术栈适配，再落盘**，见下方「模板适配规则」）：
-  - `feature-check-guide.md`：需求分析、完善、拆分与完成后落盘的工作流，[模板](references/feature-check-guide.md)
+  - `feature-check-guide.md`：需求分级（简单/复杂）、校验、复杂需求任务拆解与任务清单落盘 PROGRESS、WIP 逐任务执行、完成后归一的工作流，[模板](references/feature-check-guide.md)
   - `git-commit-guide.md`：Git 提交工作流，[模板](references/git-commit-guide.md)
   - `bug-fix-guide.md`：修复 Bug 的工作流，[模板](references/bug-fix-guide.md)
 - 非 git 仓库且用户选择不初始化：不生成 `git-commit-guide.md`，入口文档的指引目录相应调整
@@ -67,7 +67,7 @@ references/ 下的模板是**前端 TS 项目的示例**，其中静态检查（
 
 ## 状态文档约定（生成时须同步向用户说明）
 
-三份指导文档的工作流依赖模块级状态文档：`ARCHITECTURE.md`（模块架构）、`PROGRESS.md`（进度与已知 Bug）、`DECISIONS.md`（重大决策记录）。三者均位于目标模块目录内（模块代码所在目录，如 `src/modules/<module>/`）；项目无明确模块划分时位于项目根目录。首次使用时由 Agent 在首个目标模块内按需创建，无需预先全量生成。在 `AGENTS.md` 的指引目录中说明这一约定。
+三份指导文档的工作流依赖模块级状态文档：`ARCHITECTURE.md`（模块架构）、`PROGRESS.md`（进行中任务清单、已完成总结、历史归档与已知 Bug）、`DECISIONS.md`（重大决策记录）。三者均位于目标模块目录内（模块代码所在目录，如 `src/modules/<module>/`）；项目无明确模块划分时位于项目根目录。首次使用时由 Agent 在首个目标模块内按需创建，无需预先全量生成。在 `AGENTS.md` 的指引目录中说明这一约定。
 
 ## 常见反模式与对策
 
